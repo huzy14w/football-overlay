@@ -254,7 +254,8 @@
       if (raw === 'HT') return '45:00';
       if (raw === 'FT') return '90:00';
 
-      const injury = raw.match(/^(\d{1,3})\+(\d{1,2})'?$/);
+      // Supports both 90+5' and 90'+5'
+      const injury = raw.match(/^(\d{1,3})'?\+(\d{1,2})'?$/);
       if (injury) return `${injury[1]}:00`;
 
       const minuteOnly = raw.match(/^(\d{1,3})'?$/);
@@ -268,7 +269,7 @@
 
     function extractExtra(clock) {
       const raw = String(clock || '').trim();
-      const injury = raw.match(/^(\d{1,3})\+(\d{1,2})'?$/);
+      const injury = raw.match(/^(\d{1,3})'?\+(\d{1,2})'?$/);
       return injury ? `+${injury[2]}` : '';
     }
 
@@ -331,6 +332,9 @@
     function getDisplayedClock(data) {
       if (!data) return '00:00';
 
+      const statusText = String(data.status || '').toUpperCase();
+      if (statusText.includes('FULL TIME') || statusText === 'FT') return 'FT';
+
       const base = parseClockToSeconds(data.minute);
       if (base == null) return data.minute || '00:00';
       if (!data.running || !data.fetchedAtISO) return formatSeconds(base);
@@ -344,8 +348,10 @@
       if (!latest) return;
 
       timeBox.textContent = getDisplayedClock(latest);
-      extraBox.textContent = latest.extra || '';
-      overlay.classList.toggle('has-extra', !!latest.extra);
+
+      const isFullTime = String(latest.status || '').toUpperCase().includes('FULL TIME') || String(latest.status || '').toUpperCase() === 'FT';
+      extraBox.textContent = isFullTime ? '' : (latest.extra || '');
+      overlay.classList.toggle('has-extra', !isFullTime && !!latest.extra);
 
       homeLogo.src = latest.homeLogo;
       awayLogo.src = latest.awayLogo;
@@ -382,6 +388,7 @@
         awayLogo: away.team.logo,
         minute: clockToMinute(displayClock),
         extra: extractExtra(displayClock),
+        status: statusType.description || statusType.shortDetail || '',
         running: isRunning(statusType, status),
         fetchedAtISO: new Date().toISOString()
       };
