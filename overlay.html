@@ -145,7 +145,6 @@
   <script>
     const params = new URLSearchParams(window.location.search);
 
-    // Change these defaults if you want a different default match.
     const LEAGUE = params.get('league') || 'uefa.champions';
     const HOME_ABBR = (params.get('home') || 'ATM').toUpperCase();
     const AWAY_ABBR = (params.get('away') || 'BAR').toUpperCase();
@@ -181,7 +180,6 @@
       if (raw === 'HT') return 'HT';
       if (raw === 'FT') return 'FT';
 
-      // Supports both 90+5' and 90'+5'
       const injury = raw.match(/^(\d{1,3})'?\+(\d{1,2})'?$/);
       if (injury) return `${injury[1]}+${injury[2]}`;
 
@@ -241,7 +239,6 @@
       if (statusText.includes('FULL TIME') || statusText === 'FT') return 'FT';
       if (statusText.includes('HALF TIME') || statusText === 'HT') return 'HT';
 
-      // Keep stoppage time text like 90+5
       if (String(data.minute || '').includes('+')) return data.minute;
 
       const base = parseClockToSeconds(data.minute);
@@ -328,7 +325,6 @@
       const currentSecs = parseClockToSeconds(currentDisplayed) ?? 0;
       const incomingSecs = parseClockToSeconds(incoming.minute) ?? 0;
 
-      // Do not let the clock jump backwards on refresh.
       if (incoming.minute === 'HT' || incoming.minute === 'FT' || incoming.minute.includes('+')) {
         latest = incoming;
       } else if (incomingSecs >= currentSecs) {
