@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>La Liga Score Bug Overlay</title>
+  <title>UCL Score Bar Overlay</title>
   <style>
     :root {
-      --red: #ff5248;
-      --navy: #04061a;
-      --navy-2: #0b1030;
-      --white: #ffffff;
-      --text: #0c0c0f;
-      --shadow: 0 10px 26px rgba(0,0,0,0.28);
-      --border: rgba(0,0,0,0.12);
+      --ucl-blue: #1d1fb8;
+      --ucl-blue-dark: #12147a;
+      --ucl-white: #ffffff;
+      --ucl-text: #eef1ff;
+      --ucl-navy: #0b0e3f;
+      --ucl-divider: rgba(255,255,255,0.14);
+      --ucl-red: #ff3148;
+      --shadow: 0 8px 18px rgba(0,0,0,0.22);
     }
 
     * {
@@ -32,231 +33,148 @@
 
     #overlay {
       position: fixed;
-      top: 26px;
-      right: 26px;
-      width: 402px;
+      top: 34px;
+      right: 34px;
       display: flex;
       align-items: stretch;
+      height: 52px;
       box-shadow: var(--shadow);
-      transform-origin: top right;
-    }
-
-    .clock-panel {
-      width: 132px;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid var(--border);
-      border-right: 0;
-    }
-
-    .brand {
-      height: 78px;
-      background: var(--red);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-      font-size: 54px;
-      font-weight: 1000;
-      letter-spacing: -0.08em;
-      line-height: 1;
-      user-select: none;
-    }
-
-    .brand span {
-      transform: skew(-10deg);
-      display: inline-block;
-    }
-
-    .time-box,
-    .extra-box {
-      background: var(--white);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text);
-      font-weight: 1000;
-      border-top: 1px solid var(--border);
-    }
-
-    .time-box {
-      height: 74px;
-      font-size: 38px;
-      letter-spacing: -0.05em;
-    }
-
-    .extra-box {
-      height: 42px;
-      font-size: 28px;
-      background: var(--red);
-      color: var(--white);
-      display: none;
-    }
-
-    #overlay.has-extra .time-box {
-      height: 54px;
-    }
-
-    #overlay.has-extra .extra-box {
-      display: flex;
-    }
-
-    .teams-panel {
-      width: 110px;
-      background: linear-gradient(180deg, var(--navy), #000514 58%, var(--navy-2));
-      display: grid;
-      grid-template-rows: 1fr 1fr;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      position: relative;
+      border-radius: 0;
       overflow: hidden;
     }
 
-    .teams-panel::before,
-    .teams-panel::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      z-index: 0;
+    .clock-wrap {
+      display: flex;
+      align-items: stretch;
+      background: var(--ucl-white);
+      color: #16204f;
+      min-width: 154px;
+      border-right: 6px solid #0e124c;
     }
 
-    .teams-panel::before {
-      right: 0;
-      width: 6px;
-      background: linear-gradient(180deg, #1e5cff 0 50%, #d62134 50% 100%);
-    }
-
-    .teams-panel::after {
-      left: 0;
-      width: 2px;
-      background: rgba(255,255,255,0.06);
-    }
-
-    .team-row {
-      position: relative;
-      z-index: 1;
+    .ucl-logo {
+      width: 48px;
+      background: #2640d2;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 8px;
+      flex: 0 0 auto;
     }
 
-    .team-row + .team-row {
-      border-top: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .logo-wrap {
-      width: 50px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .logo-wrap img {
-      max-width: 46px;
-      max-height: 46px;
+    .ucl-logo img {
+      width: 26px;
+      height: 26px;
       object-fit: contain;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.28));
+      filter: brightness(0) invert(1);
     }
 
-    .abbr {
-      position: absolute;
-      left: 9px;
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: 0.03em;
-      color: rgba(255,255,255,0.92);
-    }
-
-    .scores-panel {
-      width: 160px;
-      display: grid;
-      grid-template-rows: 1fr 1fr;
-      border: 1px solid var(--border);
-      border-left: 0;
-      background: #f5f5f5;
-    }
-
-    .score-box {
-      position: relative;
-      background: var(--white);
-      color: #090a10;
+    .clock-box {
+      min-width: 106px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 68px;
-      font-weight: 1000;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
       line-height: 1;
-      letter-spacing: -0.08em;
     }
 
-    .score-box + .score-box {
-      border-top: 1px solid var(--border);
+    .main-bar {
+      position: relative;
+      display: grid;
+      grid-template-columns: 110px 22px 56px 56px 22px 110px 10px;
+      height: 52px;
+      background: linear-gradient(90deg, var(--ucl-blue-dark), #1f1fcb 38%, #191aa7 100%);
+      color: var(--ucl-text);
+      align-items: center;
+      padding: 0;
+      min-width: 386px;
     }
 
-    .score-box::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 8px;
-      background: linear-gradient(180deg, rgba(255,255,255,0), rgba(0,0,0,0.04));
+    .team,
+    .score,
+    .sep,
+    .spacer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .team {
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .score {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .sep {
+      color: rgba(255,255,255,0.22);
+      font-size: 28px;
+      font-weight: 300;
+    }
+
+    .spacer {
+      border-left: 4px solid var(--ucl-red);
+      width: 10px;
+    }
+
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
 <body>
   <div id="overlay">
-    <div class="clock-panel">
-      <div class="brand"><span>4</span></div>
-      <div class="time-box" id="timeBox">00:00</div>
-      <div class="extra-box" id="extraBox"></div>
+    <div class="clock-wrap">
+      <div class="ucl-logo">
+        <img id="competitionLogo" alt="Competition logo" src="https://a.espncdn.com/i/leaguelogos/soccer/500/2.png" />
+      </div>
+      <div class="clock-box" id="timeBox">90:00</div>
     </div>
 
-    <div class="teams-panel">
-      <div class="team-row">
-        <div class="abbr" id="homeAbbr">RMA</div>
-        <div class="logo-wrap"><img id="homeLogo" alt="Home team logo" /></div>
-      </div>
-      <div class="team-row">
-        <div class="abbr" id="awayAbbr">GIR</div>
-        <div class="logo-wrap"><img id="awayLogo" alt="Away team logo" /></div>
-      </div>
-    </div>
-
-    <div class="scores-panel">
-      <div class="score-box" id="homeScore">0</div>
-      <div class="score-box" id="awayScore">0</div>
+    <div class="main-bar">
+      <div class="team" id="homeAbbr">RMA</div>
+      <div class="sep">›</div>
+      <div class="score" id="homeScore">0</div>
+      <div class="score" id="awayScore">0</div>
+      <div class="sep">‹</div>
+      <div class="team" id="awayAbbr">BAR</div>
+      <div class="spacer"></div>
     </div>
   </div>
 
   <script>
-    const SCOREBOARD_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard';
+    const params = new URLSearchParams(window.location.search);
+    const LEAGUE = params.get('league') || 'uefa.champions';
+    const HOME_ABBR = (params.get('home') || 'RMA').toUpperCase();
+    const AWAY_ABBR = (params.get('away') || 'BAR').toUpperCase();
+    const SCOREBOARD_URL = `https://site.api.espn.com/apis/site/v2/sports/soccer/${LEAGUE}/scoreboard`;
 
-    const overlay = document.getElementById('overlay');
+    const competitionLogo = document.getElementById('competitionLogo');
     const timeBox = document.getElementById('timeBox');
-    const extraBox = document.getElementById('extraBox');
-    const homeLogo = document.getElementById('homeLogo');
-    const awayLogo = document.getElementById('awayLogo');
-    const homeScore = document.getElementById('homeScore');
-    const awayScore = document.getElementById('awayScore');
     const homeAbbr = document.getElementById('homeAbbr');
     const awayAbbr = document.getElementById('awayAbbr');
+    const homeScore = document.getElementById('homeScore');
+    const awayScore = document.getElementById('awayScore');
 
     let latest = null;
 
     function clockToMinute(clock) {
       const raw = String(clock || '').trim();
-
       if (!raw) return '00:00';
-      if (raw === 'HT') return '45:00';
-      if (raw === 'FT') return '90:00';
+      if (raw === 'HT') return 'HT';
+      if (raw === 'FT') return 'FT';
 
-      // Supports both 90+5' and 90'+5'
       const injury = raw.match(/^(\d{1,3})'?\+(\d{1,2})'?$/);
-      if (injury) return `${injury[1]}:00`;
+      if (injury) return `${injury[1]}+${injury[2]}`;
 
       const minuteOnly = raw.match(/^(\d{1,3})'?$/);
       if (minuteOnly) return `${minuteOnly[1]}:00`;
@@ -264,17 +182,12 @@
       const mmss = raw.match(/^(\d{1,3}):(\d{2})$/);
       if (mmss) return `${mmss[1]}:${mmss[2]}`;
 
-      return '00:00';
-    }
-
-    function extractExtra(clock) {
-      const raw = String(clock || '').trim();
-      const injury = raw.match(/^(\d{1,3})'?\+(\d{1,2})'?$/);
-      return injury ? `+${injury[2]}` : '';
+      return raw;
     }
 
     function parseClockToSeconds(value) {
-      const match = String(value || '').trim().match(/^(\d{1,3}):(\d{2})$/);
+      const text = String(value || '').trim();
+      const match = text.match(/^(\d{1,3}):(\d{2})$/);
       if (!match) return null;
       return Number(match[1]) * 60 + Number(match[2]);
     }
@@ -287,7 +200,6 @@
 
     function isRunning(statusType = {}, status = {}) {
       const state = String(statusType.state || '').toLowerCase();
-      const name = String(statusType.name || '').toLowerCase();
       const description = String(statusType.description || '').toLowerCase();
       const detail = String(statusType.detail || '').toLowerCase();
       const shortDetail = String(statusType.shortDetail || '').toLowerCase();
@@ -297,35 +209,19 @@
       if (completed) return false;
       if (state === 'pre') return false;
       if (displayClock === 'HT' || displayClock === 'FT') return false;
-
-      if (
-        description.includes('half-time') ||
-        description.includes('halftime') ||
-        detail.includes('half-time') ||
-        detail.includes('halftime') ||
-        shortDetail.includes('half-time') ||
-        shortDetail.includes('halftime') ||
-        name.includes('halftime')
-      ) {
-        return false;
-      }
-
+      if (description.includes('half-time') || detail.includes('half-time') || shortDetail.includes('half-time')) return false;
       if (state === 'in') return true;
-      if (description.includes('first half')) return true;
-      if (description.includes('second half')) return true;
-      if (detail.includes('first half')) return true;
-      if (detail.includes('second half')) return true;
-      if (shortDetail.includes('first half')) return true;
-      if (shortDetail.includes('second half')) return true;
-
+      if (description.includes('first half') || description.includes('second half')) return true;
+      if (detail.includes('first half') || detail.includes('second half')) return true;
+      if (shortDetail.includes('first half') || shortDetail.includes('second half')) return true;
       return false;
     }
 
     function pickFixture(events = []) {
       return events.find((event) => {
         const competitors = event?.competitions?.[0]?.competitors || [];
-        const abbrs = competitors.map(c => c?.team?.abbreviation);
-        return abbrs.includes('RMA') && abbrs.includes('GIR');
+        const abbrs = competitors.map(c => (c?.team?.abbreviation || '').toUpperCase());
+        return abbrs.includes(HOME_ABBR) && abbrs.includes(AWAY_ABBR);
       });
     }
 
@@ -334,6 +230,8 @@
 
       const statusText = String(data.status || '').toUpperCase();
       if (statusText.includes('FULL TIME') || statusText === 'FT') return 'FT';
+      if (statusText.includes('HALF TIME') || statusText === 'HT') return 'HT';
+      if (String(data.minute || '').includes('+')) return data.minute;
 
       const base = parseClockToSeconds(data.minute);
       if (base == null) return data.minute || '00:00';
@@ -346,26 +244,16 @@
 
     function paint() {
       if (!latest) return;
-
       timeBox.textContent = getDisplayedClock(latest);
-
-      const isFullTime = String(latest.status || '').toUpperCase().includes('FULL TIME') || String(latest.status || '').toUpperCase() === 'FT';
-      extraBox.textContent = isFullTime ? '' : (latest.extra || '');
-      overlay.classList.toggle('has-extra', !isFullTime && !!latest.extra);
-
-      homeLogo.src = latest.homeLogo;
-      awayLogo.src = latest.awayLogo;
-      homeScore.textContent = latest.homeScore;
-      awayScore.textContent = latest.awayScore;
       homeAbbr.textContent = latest.homeAbbr;
       awayAbbr.textContent = latest.awayAbbr;
+      homeScore.textContent = latest.homeScore;
+      awayScore.textContent = latest.awayScore;
+      if (latest.competitionLogo) competitionLogo.src = latest.competitionLogo;
     }
 
     async function refresh() {
-      const response = await fetch(`${SCOREBOARD_URL}?t=${Date.now()}`, {
-        cache: 'no-store'
-      });
-
+      const response = await fetch(`${SCOREBOARD_URL}?t=${Date.now()}`, { cache: 'no-store' });
       const data = await response.json();
       const fixture = pickFixture(data.events || []);
       if (!fixture) return;
@@ -376,21 +264,18 @@
       const status = comp.status || {};
       const statusType = status.type || {};
       const displayClock = status.displayClock || "0'";
+      const leagueLogo = fixture?.league?.logos?.[0]?.href || 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
 
       latest = {
-        homeName: home.team.displayName,
-        awayName: away.team.displayName,
         homeAbbr: home.team.abbreviation,
         awayAbbr: away.team.abbreviation,
         homeScore: Number(home.score || 0),
         awayScore: Number(away.score || 0),
-        homeLogo: home.team.logo,
-        awayLogo: away.team.logo,
         minute: clockToMinute(displayClock),
-        extra: extractExtra(displayClock),
         status: statusType.description || statusType.shortDetail || '',
         running: isRunning(statusType, status),
-        fetchedAtISO: new Date().toISOString()
+        fetchedAtISO: new Date().toISOString(),
+        competitionLogo: leagueLogo
       };
 
       paint();
