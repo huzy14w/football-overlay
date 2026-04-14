@@ -10,10 +10,8 @@
       --ucl-blue-dark: #12147a;
       --ucl-white: #ffffff;
       --ucl-text: #eef1ff;
-      --ucl-navy: #0b0e3f;
-      --ucl-divider: rgba(255,255,255,0.14);
       --ucl-red: #ff3148;
-      --shadow: 0 8px 18px rgba(0,0,0,0.22);
+      --shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
     }
 
     * {
@@ -39,7 +37,6 @@
       align-items: stretch;
       height: 52px;
       box-shadow: var(--shadow);
-      border-radius: 0;
       overflow: hidden;
     }
 
@@ -80,14 +77,12 @@
     }
 
     .main-bar {
-      position: relative;
       display: grid;
       grid-template-columns: 110px 22px 56px 56px 22px 110px 10px;
       height: 52px;
       background: linear-gradient(90deg, var(--ucl-blue-dark), #1f1fcb 38%, #191aa7 100%);
       color: var(--ucl-text);
       align-items: center;
-      padding: 0;
       min-width: 386px;
     }
 
@@ -116,7 +111,7 @@
     }
 
     .sep {
-      color: rgba(255,255,255,0.22);
+      color: rgba(255, 255, 255, 0.22);
       font-size: 28px;
       font-weight: 300;
     }
@@ -124,10 +119,6 @@
     .spacer {
       border-left: 4px solid var(--ucl-red);
       width: 10px;
-    }
-
-    .hidden {
-      display: none !important;
     }
   </style>
 </head>
@@ -137,11 +128,11 @@
       <div class="ucl-logo">
         <img id="competitionLogo" alt="Competition logo" src="https://a.espncdn.com/i/leaguelogos/soccer/500/2.png" />
       </div>
-      <div class="clock-box" id="timeBox">90:00</div>
+      <div class="clock-box" id="timeBox">00:00</div>
     </div>
 
     <div class="main-bar">
-      <div class="team" id="homeAbbr">RMA</div>
+      <div class="team" id="homeAbbr">ATM</div>
       <div class="sep">›</div>
       <div class="score" id="homeScore">0</div>
       <div class="score" id="awayScore">0</div>
@@ -153,37 +144,22 @@
 
   <script>
     const params = new URLSearchParams(window.location.search);
+
+    // Change these defaults if you want a different default match.
     const LEAGUE = params.get('league') || 'uefa.champions';
-    const HOME_ABBR = (params.get('home') || 'RMA').toUpperCase();
+    const HOME_ABBR = (params.get('home') || 'ATM').toUpperCase();
     const AWAY_ABBR = (params.get('away') || 'BAR').toUpperCase();
+
     const SCOREBOARD_URL = `https://site.api.espn.com/apis/site/v2/sports/soccer/${LEAGUE}/scoreboard`;
 
     const competitionLogo = document.getElementById('competitionLogo');
     const timeBox = document.getElementById('timeBox');
-    const homeAbbr = document.getElementById('homeAbbr');
-    const awayAbbr = document.getElementById('awayAbbr');
-    const homeScore = document.getElementById('homeScore');
-    const awayScore = document.getElementById('awayScore');
+    const homeAbbrEl = document.getElementById('homeAbbr');
+    const awayAbbrEl = document.getElementById('awayAbbr');
+    const homeScoreEl = document.getElementById('homeScore');
+    const awayScoreEl = document.getElementById('awayScore');
 
     let latest = null;
-
-    function clockToMinute(clock) {
-      const raw = String(clock || '').trim();
-      if (!raw) return '00:00';
-      if (raw === 'HT') return 'HT';
-      if (raw === 'FT') return 'FT';
-
-      const injury = raw.match(/^(\d{1,3})'?\+(\d{1,2})'?$/);
-      if (injury) return `${injury[1]}+${injury[2]}`;
-
-      const minuteOnly = raw.match(/^(\d{1,3})'?$/);
-      if (minuteOnly) return `${minuteOnly[1]}:00`;
-
-      const mmss = raw.match(/^(\d{1,3}):(\d{2})$/);
-      if (mmss) return `${mmss[1]}:${mmss[2]}`;
-
-      return raw;
-    }
 
     function parseClockToSeconds(value) {
       const text = String(value || '').trim();
@@ -195,7 +171,27 @@
     function formatSeconds(total) {
       const minutes = Math.max(0, Math.floor(total / 60));
       const seconds = Math.max(0, total % 60);
-      return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function clockToMinute(clock) {
+      const raw = String(clock || '').trim();
+
+      if (!raw) return '00:00';
+      if (raw === 'HT') return 'HT';
+      if (raw === 'FT') return 'FT';
+
+      // Supports both 90+5' and 90'+5'
+      const injury = raw.match(/^(\d{1,3})'?\+(\d{1,2})'?$/);
+      if (injury) return `${injury[1]}+${injury[2]}`;
+
+      const minuteOnly = raw.match(/^(\d{1,3})'?$/);
+      if (minuteOnly) return `${minuteOnly[1]}:00`;
+
+      const mmss = raw.match(/^(\d{1,3}):(\d{2})$/);
+      if (mmss) return `${mmss[1]}:${mmss[2]}`;
+
+      return raw;
     }
 
     function isRunning(statusType = {}, status = {}) {
@@ -209,18 +205,30 @@
       if (completed) return false;
       if (state === 'pre') return false;
       if (displayClock === 'HT' || displayClock === 'FT') return false;
-      if (description.includes('half-time') || detail.includes('half-time') || shortDetail.includes('half-time')) return false;
+
+      if (
+        description.includes('half-time') ||
+        description.includes('halftime') ||
+        detail.includes('half-time') ||
+        detail.includes('halftime') ||
+        shortDetail.includes('half-time') ||
+        shortDetail.includes('halftime')
+      ) {
+        return false;
+      }
+
       if (state === 'in') return true;
       if (description.includes('first half') || description.includes('second half')) return true;
       if (detail.includes('first half') || detail.includes('second half')) return true;
       if (shortDetail.includes('first half') || shortDetail.includes('second half')) return true;
+
       return false;
     }
 
     function pickFixture(events = []) {
       return events.find((event) => {
         const competitors = event?.competitions?.[0]?.competitors || [];
-        const abbrs = competitors.map(c => (c?.team?.abbreviation || '').toUpperCase());
+        const abbrs = competitors.map((c) => (c?.team?.abbreviation || '').toUpperCase());
         return abbrs.includes(HOME_ABBR) && abbrs.includes(AWAY_ABBR);
       });
     }
@@ -229,60 +237,115 @@
       if (!data) return '00:00';
 
       const statusText = String(data.status || '').toUpperCase();
+
       if (statusText.includes('FULL TIME') || statusText === 'FT') return 'FT';
       if (statusText.includes('HALF TIME') || statusText === 'HT') return 'HT';
+
+      // Keep stoppage time text like 90+5
       if (String(data.minute || '').includes('+')) return data.minute;
 
       const base = parseClockToSeconds(data.minute);
       if (base == null) return data.minute || '00:00';
-      if (!data.running || !data.fetchedAtISO) return formatSeconds(base);
+
+      if (!data.running || !data.fetchedAtISO) {
+        return formatSeconds(base);
+      }
 
       const fetchedAt = new Date(data.fetchedAtISO).getTime();
+      if (Number.isNaN(fetchedAt)) {
+        return formatSeconds(base);
+      }
+
       const elapsed = Math.max(0, Math.floor((Date.now() - fetchedAt) / 1000));
       return formatSeconds(base + elapsed);
     }
 
     function paint() {
       if (!latest) return;
+
       timeBox.textContent = getDisplayedClock(latest);
-      homeAbbr.textContent = latest.homeAbbr;
-      awayAbbr.textContent = latest.awayAbbr;
-      homeScore.textContent = latest.homeScore;
-      awayScore.textContent = latest.awayScore;
-      if (latest.competitionLogo) competitionLogo.src = latest.competitionLogo;
+      homeAbbrEl.textContent = latest.homeAbbr;
+      awayAbbrEl.textContent = latest.awayAbbr;
+      homeScoreEl.textContent = latest.homeScore;
+      awayScoreEl.textContent = latest.awayScore;
+
+      if (latest.competitionLogo) {
+        competitionLogo.src = latest.competitionLogo;
+      }
     }
 
     async function refresh() {
-      const response = await fetch(`${SCOREBOARD_URL}?t=${Date.now()}`, { cache: 'no-store' });
+      const response = await fetch(`${SCOREBOARD_URL}?t=${Date.now()}`, {
+        cache: 'no-store'
+      });
+
+      if (!response.ok) return;
+
       const data = await response.json();
       const fixture = pickFixture(data.events || []);
       if (!fixture) return;
 
-      const comp = fixture.competitions[0];
-      const home = comp.competitors.find(c => c.homeAway === 'home');
-      const away = comp.competitors.find(c => c.homeAway === 'away');
+      const comp = fixture.competitions?.[0];
+      if (!comp) return;
+
+      const home = comp.competitors.find((c) => c.homeAway === 'home');
+      const away = comp.competitors.find((c) => c.homeAway === 'away');
+      if (!home || !away) return;
+
       const status = comp.status || {};
       const statusType = status.type || {};
       const displayClock = status.displayClock || "0'";
-      const leagueLogo = fixture?.league?.logos?.[0]?.href || 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
+      const leagueLogo =
+        fixture?.league?.logos?.[0]?.href ||
+        'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
 
-      latest = {
-        homeAbbr: home.team.abbreviation,
-        awayAbbr: away.team.abbreviation,
+      const clockSeconds = Number(status.clock || 0);
+
+      const incomingMinute =
+        clockSeconds > 0
+          ? formatSeconds(clockSeconds)
+          : clockToMinute(displayClock);
+
+      const incoming = {
+        homeAbbr: home.team.abbreviation || HOME_ABBR,
+        awayAbbr: away.team.abbreviation || AWAY_ABBR,
         homeScore: Number(home.score || 0),
         awayScore: Number(away.score || 0),
-        minute: clockToMinute(displayClock),
+        minute: incomingMinute,
         status: statusType.description || statusType.shortDetail || '',
         running: isRunning(statusType, status),
         fetchedAtISO: new Date().toISOString(),
         competitionLogo: leagueLogo
       };
 
+      if (!latest) {
+        latest = incoming;
+        paint();
+        return;
+      }
+
+      const currentDisplayed = getDisplayedClock(latest);
+      const currentSecs = parseClockToSeconds(currentDisplayed) ?? 0;
+      const incomingSecs = parseClockToSeconds(incoming.minute) ?? 0;
+
+      // Do not let the clock jump backwards on refresh.
+      if (incoming.minute === 'HT' || incoming.minute === 'FT' || incoming.minute.includes('+')) {
+        latest = incoming;
+      } else if (incomingSecs >= currentSecs) {
+        latest = incoming;
+      } else {
+        latest = {
+          ...incoming,
+          minute: latest.minute,
+          fetchedAtISO: latest.fetchedAtISO
+        };
+      }
+
       paint();
     }
 
     refresh();
-    setInterval(refresh, 10000);
+    setInterval(refresh, 3000);
     setInterval(paint, 1000);
   </script>
 </body>
